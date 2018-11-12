@@ -30,6 +30,7 @@ var/
 versions.cfg
 tardis_db
 tardis/apps/*
+!tardis/settings.py
 !tardis/apps/__init__.py
 !tardis/apps/anzsrc_codes
 !tardis/apps/deep_storage_download_mapper
