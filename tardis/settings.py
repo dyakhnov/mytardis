@@ -11,3 +11,5 @@ DATABASES = {
         'PORT':     "5432",
     }
 }
+
+DEFAULT_STORAGE_BASE_DIR = "/var/store"
