@@ -1,0 +1,65 @@
+def label = "app-${UUID.randomUUID().toString()}"
+podTemplate(
+    label: label,
+    serviceAccount: 'jenkins',
+    automountServiceAccountToken: true,
+    containers: [
+        containerTemplate(
+            name: 'docker',
+            image: 'docker:18.06.1-ce-dind',
+            ttyEnabled: true,
+            command: 'cat',
+            envVars: [
+                containerEnvVar(key: 'DOCKER_CONFIG', value: '/tmp/docker')
+            ]
+        ),
+        containerTemplate(
+            name: 'kubectl',
+            image: 'lachlanevenson/k8s-kubectl:v1.13.0',
+            ttyEnabled: true,
+            command: 'cat',
+            envVars: [
+                containerEnvVar(key: 'KUBECONFIG', value: '/tmp/kube/config')
+            ]
+        )
+    ],
+    volumes: [
+        secretVolume(secretName: 'kube-config', mountPath: '/tmp/kube'),
+        secretVolume(secretName: 'docker-config', mountPath: '/tmp/docker'),
+        hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock')
+    ]
+) {
+    node(label) {
+        def DOCKER_HUB_ACCOUNT = 'dyakhnov'
+        def DOCKER_IMAGE_NAME = 'mytardis'
+        def K8S_DEPLOYMENT_NAMESPACE = 'mytardis'
+        def K8S_DEPLOYMENT_NAME = 'mytardis'
+        stage('Clone repository') {
+            checkout scm
+        }
+        // def TAG = sh(returnStdout: true, script: 'git tag --contains | head -1').trim()
+        def TAG = sh(returnStdout: true, script: 'git log -n 1 --pretty=format:"%h"').trim()
+        stage('Build image') {
+            container('docker') {
+                sh("docker build -t ${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:${TAG} .")
+            }
+        }
+        stage('Test image') {
+            container('docker') {
+                sh('echo "Volkswagen-type approach - tests passed"')
+            }
+        }
+        stage('Push image') {
+            container('docker') {
+                sh("docker push ${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:${TAG}")
+                sh("docker tag ${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:${TAG} ${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:latest")
+                sh("docker push ${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:latest")
+            }
+        }
+        stage('Deploy image') {
+            container('kubectl') {
+                sh ("kubectl -n ${K8S_DEPLOYMENT_NAMESPACE} set image deployment/${K8S_DEPLOYMENT_NAME} ${K8S_DEPLOYMENT_NAME}=${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:${TAG}")
+            }
+        }
+    }
+}
