@@ -50,3 +50,4 @@ tardis/tardis_portal/filters/*
 !tardis/tardis_portal/filters/__init__.py
 !tardis/tardis_portal/filters/diffractionimage.py
 !tardis/tardis_portal/filters/jeolsem.py
+venv/

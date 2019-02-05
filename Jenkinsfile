@@ -34,6 +34,7 @@ podTemplate(
         def DOCKER_IMAGE_NAME = 'mytardis'
         def K8S_DEPLOYMENT_NAMESPACE = 'mytardis'
         def K8S_DEPLOYMENT_NAME = 'mytardis'
+        def K8S_DEPLOYMENT_NAME_CELERY = 'celery'
         stage('Clone repository') {
             checkout scm
         }
@@ -59,6 +60,7 @@ podTemplate(
         stage('Deploy image') {
             container('kubectl') {
                 sh ("kubectl -n ${K8S_DEPLOYMENT_NAMESPACE} set image deployment/${K8S_DEPLOYMENT_NAME} ${K8S_DEPLOYMENT_NAME}=${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:${TAG}")
+                sh ("kubectl -n ${K8S_DEPLOYMENT_NAMESPACE} set image deployment/${K8S_DEPLOYMENT_NAME_CELERY} ${K8S_DEPLOYMENT_NAME_CELERY}=${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:${TAG}")
             }
         }
     }
