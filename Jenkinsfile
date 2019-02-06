@@ -15,7 +15,7 @@ podTemplate(
         ),
         containerTemplate(
             name: 'mysql',
-            image: 'mysql/mysql:5.6',
+            image: 'mysql:5.6',
             alwaysPullImage: false,
             envVars: [
                 envVar(key: 'MYSQL_ROOT_PASSWORD', value: 'mysql')
