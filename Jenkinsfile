@@ -14,6 +14,14 @@ podTemplate(
             ]
         ),
         containerTemplate(
+            name: 'mysql',
+            image: 'mysql/mysql:5.6',
+            alwaysPullImage: false,
+            envVars: [
+                envVar(key: 'MYSQL_ROOT_PASSWORD', value: 'mysql')
+            ]
+        ),
+        containerTemplate(
             name: 'kubectl',
             image: 'lachlanevenson/k8s-kubectl:v1.13.0',
             ttyEnabled: true,
@@ -45,7 +53,7 @@ podTemplate(
         }
         stage('Test image') {
             container('docker') {
-                sh('echo "Volkswagen-type approach - tests passed"')
+                sh("docker run ${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:${TAG} -e TEST_TYPE=memory test")
             }
         }
         stage('Push image') {
