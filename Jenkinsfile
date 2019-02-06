@@ -53,7 +53,7 @@ podTemplate(
         }
         stage('Test image') {
             container('docker') {
-                sh("docker run ${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:${TAG} -e TEST_TYPE=memory test")
+                sh("docker run ${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:${TAG} python test.py test --settings=tardis.test_settings")
             }
         }
         stage('Push image') {
