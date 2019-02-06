@@ -26,6 +26,8 @@ RUN pip install --upgrade --no-cache-dir pip
 RUN pip install pyyaml
 
 RUN mkdir -p /app
+RUN mkdir -p /app/var/store
+
 WORKDIR /app
 
 COPY ./ ./
