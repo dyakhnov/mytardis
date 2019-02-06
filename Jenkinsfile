@@ -15,10 +15,18 @@ podTemplate(
         ),
         containerTemplate(
             name: 'mysql',
-            image: 'mysql:5.6',
+            image: 'mysql:latest',
             alwaysPullImage: false,
             envVars: [
                 envVar(key: 'MYSQL_ROOT_PASSWORD', value: 'mysql')
+            ]
+        ),
+        containerTemplate(
+            name: 'postgres',
+            image: 'postgres:latest',
+            alwaysPullImage: false,
+            envVars: [
+                envVar(key: 'POSTGRES_PASSWORD', value: 'postgres')
             ]
         ),
         containerTemplate(
@@ -53,7 +61,9 @@ podTemplate(
         }
         stage('Test image') {
             container('docker') {
-                sh("docker run ${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:${TAG} python test.py test --settings=tardis.test_settings")
+                ['test_settings', 'test_on_mysql_settings', 'test_on_postgresql_settings'].each { item ->
+                    sh("docker run ${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:${TAG} python test.py test --settings=${item}")
+                }
             }
         }
         stage('Push image') {
