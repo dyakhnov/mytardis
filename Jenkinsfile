@@ -61,7 +61,7 @@ podTemplate(
         }
         stage('Test image') {
             container('docker') {
-                ['test_settings', 'test_on_mysql_settings', 'test_on_postgresql_settings'].each { item ->
+                ['test_on_mysql_settings', 'test_on_postgresql_settings', 'test_settings'].each { item ->
                     sh("docker run ${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:${TAG} python test.py test --settings=tardis.${item}")
                 }
             }

@@ -7,7 +7,7 @@ DATABASES = {
         'NAME':     "mytardis",
         'USER':     "root",
         'PASSWORD': "mysql",
-        'HOST':     "mysql",
+        'HOST':     "localhost",
         'PORT':     "3306",
         'STORAGE_ENGINE':   "InnoDB",
         'OPTIONS': {
