@@ -54,9 +54,9 @@ podTemplate(
         }
         // def TAG = sh(returnStdout: true, script: 'git tag --contains | head -1').trim()
         def TAG = sh(returnStdout: true, script: 'git log -n 1 --pretty=format:"%h"').trim()
-        stage('Build image') {
+        stage('Build test image') {
             container('docker') {
-                sh("docker build -t ${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:${TAG} .")
+                sh("docker build . -t ${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:${TAG} --target=test")
             }
         }
         stage('Test image') {
@@ -66,14 +66,19 @@ podTemplate(
                 }
             }
         }
-        stage('Push image') {
+        stage('Build production image') {
+            container('docker') {
+                sh("docker build . -t ${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:${TAG} --target=base")
+            }
+        }
+        stage('Push production image') {
             container('docker') {
                 sh("docker push ${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:${TAG}")
                 sh("docker tag ${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:${TAG} ${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:latest")
                 sh("docker push ${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:latest")
             }
         }
-        stage('Deploy image') {
+        stage('Deploy production image') {
             container('kubectl') {
                 ['mytardis', 'celery-worker', 'celery-filter', 'celery-beat'].each { item ->
                     sh ("kubectl -n ${K8S_DEPLOYMENT_NAMESPACE} set image deployment/${item} ${item}=${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:${TAG}")
