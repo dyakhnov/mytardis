@@ -7,7 +7,7 @@ DATABASES = {
         'NAME':     "mytardis",
         'USER':     "root",
         'PASSWORD': "mysql",
-        'HOST':     "localhost",
+        'HOST':     "127.0.0.1", # localhost will force client to use socket, rather than TCP
         'PORT':     "3306",
         'STORAGE_ENGINE':   "InnoDB",
         'OPTIONS': {
