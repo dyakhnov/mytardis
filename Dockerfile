@@ -16,12 +16,6 @@ RUN apt-get update && apt-get install -qy \
 		libmagickwand-dev \
 	&& apt-get clean
 
-#RUN mkdir /tmp/phantomjs && \
-#    curl -L https://github.com/Medium/phantomjs/releases/download/v2.1.1/phantomjs-2.1.1-linux-x86_64.tar.bz2  | tar -xj --strip-components=1 -C /tmp/phantomjs && \
-#    cd /tmp/phantomjs && \
-#    mv bin/phantomjs /usr/local/bin && \
-#    rm -rf /tmp/*
-
 RUN curl -sL https://deb.nodesource.com/setup_10.x | bash -
 
 RUN apt-get update && apt-get install -qy \
@@ -43,6 +37,9 @@ RUN pip install -r requirements-postgres.txt
 COPY tardis/apps/social_auth/requirements*.txt ./tardis/apps/social_auth/
 RUN pip install -r tardis/apps/social_auth/requirements.txt
 
+RUN git clone https://github.com/wettenhj/mytardis-app-mydata.git ./tardis/apps/mydata/
+RUN pip install -r tardis/apps/mydata/requirements.txt
+
 COPY package.json .
 
 RUN npm set progress=false && \
@@ -50,12 +47,7 @@ RUN npm set progress=false && \
     npm install
 
 COPY . .
-COPY ./settings.py ./tardis
-
-RUN git clone https://github.com/wettenhj/mytardis-app-mydata.git ./tardis/apps/mydata
-RUN pip install -r tardis/apps/mydata/requirements.txt
-
-RUN mkdir -p /app/var/store
+COPY settings.py ./tardis/
 
 EXPOSE 8000
 
@@ -66,3 +58,7 @@ FROM base AS test
 #COPY --from=base . .
 RUN pip install -r requirements-mysql.txt
 RUN pip install -r requirements-test.txt
+
+RUN mkdir -p var/store
+
+CMD ["cat"]
