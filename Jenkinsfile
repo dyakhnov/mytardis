@@ -46,6 +46,7 @@ podTemplate(
     ]
 ) {
     node(label) {
+        def HOSTS = '--add-host mysql:172.17.0.1 --add-host postgres:172.17.0.1'
         def DOCKER_HUB_ACCOUNT = 'dyakhnov'
         def DOCKER_IMAGE_NAME = 'mytardis'
         def K8S_DEPLOYMENT_NAMESPACE = 'mytardis'
@@ -62,7 +63,7 @@ podTemplate(
         stage('Test image') {
             container('docker') {
                 ['test_on_mysql_settings', 'test_on_postgresql_settings', 'test_settings'].each { item ->
-                    sh("docker run ${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:${TAG} python test.py test --settings=tardis.${item}")
+                    sh("docker run ${HOSTS} ${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:${TAG} python test.py test --settings=tardis.${item}")
                 }
             }
         }
