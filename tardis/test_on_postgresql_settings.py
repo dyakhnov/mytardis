@@ -7,7 +7,7 @@ DATABASES = {
         'NAME':     "mytardis",
         'USER':     "postgres",
         'PASSWORD': "postgres",
-        'HOST':     "pg",
+        'HOST':     "localhost",
         'PORT':     "5432",
     }
 }
