@@ -1,6 +1,13 @@
-def label = "app-${UUID.randomUUID().toString()}"
+def workerLabel = 'mytardis'
+def dockerHubAccount = 'dyakhnov'
+def dockerImageName = 'mytardis'
+def dockerImageTag = ''
+def dockerImageFullNameTag = ''
+def dockerImageFullNameLatest = "${dockerHubAccount}/${dockerImageName}:latest"
+def k8sDeploymentNamespace = 'mytardis'
+
 podTemplate(
-    label: label,
+    label: workerLabel,
     serviceAccount: 'jenkins',
     automountServiceAccountToken: true,
     containers: [
@@ -45,44 +52,42 @@ podTemplate(
         hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock')
     ]
 ) {
-    node(label) {
-        def HOSTS = '--add-host mysql:172.17.0.1 --add-host postgres:172.17.0.1'
-        def DOCKER_HUB_ACCOUNT = 'dyakhnov'
-        def DOCKER_IMAGE_NAME = 'mytardis'
-        def K8S_DEPLOYMENT_NAMESPACE = 'mytardis'
+    node(workerLabel) {
+        def ip = sh(returnStdout: true, script: 'hostname -i').trim()
+        def hosts = '--add-host mysql:${ip} --add-host postgres:${ip}'
         stage('Clone repository') {
             checkout scm
         }
-        // def TAG = sh(returnStdout: true, script: 'git tag --contains | head -1').trim()
-        def TAG = sh(returnStdout: true, script: 'git log -n 1 --pretty=format:"%h"').trim()
+        dockerImageTag = sh(returnStdout: true, script: 'git log -n 1 --pretty=format:"%h"').trim()
+        dockerImageFullNameTag = "${dockerHubAccount}/${dockerImageName}:${dockerImageTag}"
         stage('Build test image') {
             container('docker') {
-                sh("docker build . -t ${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:${TAG} --target=test")
+                sh("docker build . --tag ${dockerImageFullNameTag} --target=test")
             }
         }
         stage('Test image') {
             container('docker') {
-                ['test_on_mysql_settings', 'test_on_postgresql_settings', 'test_settings'].each { item ->
-                    sh("docker run ${HOSTS} ${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:${TAG} python test.py test --settings=tardis.${item}")
+                ['test_on_postgresql_settings', 'test_on_mysql_settings', 'test_settings'].each { item ->
+                    sh("docker run ${hosts} ${dockerImageFullNameTag} python test.py test --settings=tardis.${item}")
                 }
             }
         }
         stage('Build production image') {
             container('docker') {
-                sh("docker build . -t ${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:${TAG} --target=base")
+                sh("docker build . --tag ${dockerImageFullNameTag} --target=base")
             }
         }
         stage('Push production image') {
             container('docker') {
-                sh("docker push ${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:${TAG}")
-                sh("docker tag ${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:${TAG} ${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:latest")
-                sh("docker push ${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:latest")
+                sh("docker push ${dockerImageFullNameTag}")
+                sh("docker tag ${dockerImageFullNameTag} ${dockerImageFullNameLatest}")
+                sh("docker push ${dockerImageFullNameLatest}")
             }
         }
         stage('Deploy production image') {
             container('kubectl') {
                 ['mytardis', 'celery-worker', 'celery-filter', 'celery-beat'].each { item ->
-                    sh ("kubectl -n ${K8S_DEPLOYMENT_NAMESPACE} set image deployment/${item} ${item}=${DOCKER_HUB_ACCOUNT}/${DOCKER_IMAGE_NAME}:${TAG}")
+                    sh ("kubectl -n ${k8sDeploymentNamespace} set image deployment/${item} ${item}=${dockerImageFullNameTag}")
                 }
             }
         }
