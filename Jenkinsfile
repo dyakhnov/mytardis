@@ -67,8 +67,15 @@ podTemplate(
         }
         stage('Test image') {
             container('docker') {
-                ['test_on_mysql_settings', 'test_settings', 'test_on_postgresql_settings'].each { item ->
-                    sh("docker run ${hosts} ${dockerImageFullNameTag} python test.py test --settings=tardis.${item}")
+                parallel {
+                    stage('Pylint') {
+                        sh("docker run ${dockerImageFullNameTag} pylint --rcfile .pylintrc tardis")
+                    }
+                    ['test_settings', 'test_on_postgresql_settings', 'test_on_mysql_settings'].each { item ->
+                        stage(${item}) {
+                            sh("docker run ${hosts} ${dockerImageFullNameTag} python test.py test --settings=tardis.${item}")
+                        }
+                    }
                 }
             }
         }
