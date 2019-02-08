@@ -54,7 +54,6 @@ podTemplate(
 ) {
     node(workerLabel) {
         def ip = sh(returnStdout: true, script: 'hostname -i').trim()
-        def hosts = "--add-host mysql:${ip} --add-host postgres:${ip}"
         stage('Clone repository') {
             checkout scm
         }
@@ -68,13 +67,17 @@ podTemplate(
         stage('Test image') {
             container('docker') {
                 parallel {
-                    stage('Pylint') {
+                    'pylint': {
                         sh("docker run ${dockerImageFullNameTag} pylint --rcfile .pylintrc tardis")
-                    }
-                    ['test_settings', 'test_on_postgresql_settings', 'test_on_mysql_settings'].each { item ->
-                        stage(${item}) {
-                            sh("docker run ${hosts} ${dockerImageFullNameTag} python test.py test --settings=tardis.${item}")
-                        }
+                    },
+                    'memory': {
+                        sh("docker run ${dockerImageFullNameTag} python test.py test --settings=tardis.test_settings")
+                    },
+                    'mysql': {
+                        sh("docker run --add-host mysql:${ip} ${dockerImageFullNameTag} python test.py test --settings=tardis.test_on_mysql_settings")
+                    },
+                    'postgres': {
+                        sh("docker run --add-host postgres:${ip} ${dockerImageFullNameTag} python test.py test --settings=tardis.test_on_postgresql_settings")
                     }
                 }
             }
