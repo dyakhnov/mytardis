@@ -54,7 +54,7 @@ podTemplate(
 ) {
     node(workerLabel) {
         def ip = sh(returnStdout: true, script: 'hostname -i').trim()
-        def hosts = '--add-host mysql:${ip} --add-host postgres:${ip}'
+        def hosts = "--add-host mysql:${ip} --add-host postgres:${ip}"
         stage('Clone repository') {
             checkout scm
         }
