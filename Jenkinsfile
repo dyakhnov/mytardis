@@ -69,17 +69,17 @@ podTemplate(
         stage('Test image') {
             container('docker') {
                 parallel (
-                    //'pylint': {
-                    //    sh("docker run ${dockerImageFullNameTag} pylint --rcfile .pylintrc tardis")
-                    //},
+                    'pylint': {
+                        sh("docker run ${dockerImageFullNameTag} pylint --rcfile .pylintrc tardis")
+                    },
                     'memory': {
                         sh("docker run ${dockerImageFullNameTag} python test.py test --settings=tardis.test_settings")
                     },
-                    'mysql': {
-                        sh("docker run --add-host mysql:${ip} ${dockerImageFullNameTag} python test.py test --settings=tardis.test_on_mysql_settings")
-                    },
                     'postgres': {
                         sh("docker run --add-host postgres:${ip} ${dockerImageFullNameTag} python test.py test --settings=tardis.test_on_postgresql_settings")
+                    },
+                    'mysql': {
+                        sh("docker run --add-host mysql:${ip} ${dockerImageFullNameTag} python test.py test --settings=tardis.test_on_mysql_settings")
                     }
                 )
             }
