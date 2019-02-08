@@ -24,7 +24,7 @@ podTemplate(
             name: 'mysql',
             image: 'mysql:latest',
             alwaysPullImage: false,
-            command: '--default-authentication-plugin=mysql_native_password',
+            command: 'mysqld --default-authentication-plugin=mysql_native_password',
             envVars: [
                 envVar(key: 'MYSQL_ROOT_PASSWORD', value: 'mysql')
             ]
