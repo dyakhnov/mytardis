@@ -22,16 +22,15 @@ podTemplate(
         ),
         containerTemplate(
             name: 'mysql',
-            image: 'mysql:latest',
+            image: 'mysql:5.7',
             alwaysPullImage: false,
-            command: 'mysqld --default-authentication-plugin=mysql_native_password',
             envVars: [
                 envVar(key: 'MYSQL_ROOT_PASSWORD', value: 'mysql')
             ]
         ),
         containerTemplate(
             name: 'postgres',
-            image: 'postgres:latest',
+            image: 'postgres:9.3',
             alwaysPullImage: false,
             envVars: [
                 envVar(key: 'POSTGRES_PASSWORD', value: 'postgres')
