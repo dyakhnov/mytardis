@@ -1,6 +1,6 @@
 import os
-import yaml
 import urllib
+import yaml
 from .default_settings import *
 
 data = yaml.load(os.environ.get('SETTINGS'))

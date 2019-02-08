@@ -18,7 +18,9 @@ podTemplate(
             command: 'cat',
             envVars: [
                 containerEnvVar(key: 'DOCKER_CONFIG', value: '/tmp/docker')
-            ]
+            ],
+            resourceRequestCpu: '500m',
+            resourceRequestMemory: '500Mi'
         ),
         containerTemplate(
             name: 'mysql',
