@@ -24,6 +24,7 @@ podTemplate(
             name: 'mysql',
             image: 'mysql:latest',
             alwaysPullImage: false,
+            command: '--default-authentication-plugin=mysql_native_password',
             envVars: [
                 envVar(key: 'MYSQL_ROOT_PASSWORD', value: 'mysql')
             ]
@@ -67,7 +68,7 @@ podTemplate(
         }
         stage('Test image') {
             container('docker') {
-                ['test_on_postgresql_settings', 'test_on_mysql_settings', 'test_settings'].each { item ->
+                ['test_on_mysql_settings', 'test_settings', 'test_on_postgresql_settings'].each { item ->
                     sh("docker run ${hosts} ${dockerImageFullNameTag} python test.py test --settings=tardis.${item}")
                 }
             }
