@@ -66,7 +66,7 @@ podTemplate(
         }
         stage('Test image') {
             container('docker') {
-                parallel {
+                parallel (
                     'pylint': {
                         sh("docker run ${dockerImageFullNameTag} pylint --rcfile .pylintrc tardis")
                     },
@@ -79,7 +79,7 @@ podTemplate(
                     'postgres': {
                         sh("docker run --add-host postgres:${ip} ${dockerImageFullNameTag} python test.py test --settings=tardis.test_on_postgresql_settings")
                     }
-                }
+                )
             }
         }
         stage('Build production image') {
