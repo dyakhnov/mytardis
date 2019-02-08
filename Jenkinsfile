@@ -67,9 +67,9 @@ podTemplate(
         stage('Test image') {
             container('docker') {
                 parallel (
-                    'pylint': {
-                        sh("docker run ${dockerImageFullNameTag} pylint --rcfile .pylintrc tardis")
-                    },
+                    //'pylint': {
+                    //    sh("docker run ${dockerImageFullNameTag} pylint --rcfile .pylintrc tardis")
+                    //},
                     'memory': {
                         sh("docker run ${dockerImageFullNameTag} python test.py test --settings=tardis.test_settings")
                     },
