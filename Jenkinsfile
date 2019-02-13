@@ -69,6 +69,12 @@ podTemplate(
         stage('Test image') {
             container('docker') {
                 parallel (
+                    'npm': {
+                        sh("npm test")
+                    },
+                    'behave': {
+                        sh("docker run ${dockerImageFullNameTag} python manage.py behave --settings=tardis.test_settings")
+                    },
                     'pylint': {
                         sh("docker run ${dockerImageFullNameTag} pylint --rcfile .pylintrc tardis")
                     },

@@ -1,6 +1,7 @@
 FROM ubuntu:18.04 AS base
 
-RUN apt-get update && apt-get install -qy --no-install-recommends \
+RUN apt-get update -yqq && \
+    apt-get install -yqq \
         build-essential \
         curl \
         git \
@@ -20,15 +21,17 @@ RUN apt-get update && apt-get install -qy --no-install-recommends \
         python-pip \
         python-setuptools \
         zlib1g-dev \
+        unzip \
         mc \
-        ncdu \
-	&& apt-get clean
+        ncdu && \
+	apt-get clean
 
 RUN curl -sL https://deb.nodesource.com/setup_10.x | bash -
 
-RUN apt-get update && apt-get install -qy \
-		nodejs \
-	&& apt-get clean
+RUN apt-get update -yqq && \
+    apt-get install -yqq \
+		nodejs && \
+	apt-get clean
 
 RUN pip install --upgrade --no-cache-dir pip
 
@@ -42,13 +45,13 @@ WORKDIR /app
 COPY requirements-base.txt ./
 # don't install Git repos in 'edit' mode
 RUN sed -i 's/-e git+/git+/g' requirements-base.txt
-RUN pip install -r requirements-base.txt
+RUN pip install -q -r requirements-base.txt
 
 COPY requirements-postgres.txt ./
-RUN pip install -r requirements-postgres.txt
+RUN pip install -q -r requirements-postgres.txt
 
 COPY tardis/apps/social_auth/requirements*.txt ./tardis/apps/social_auth/
-RUN pip install -r tardis/apps/social_auth/requirements.txt
+RUN pip install -q -r tardis/apps/social_auth/requirements.txt
 
 #RUN git clone https://github.com/wettenhj/mytardis-app-mydata.git ./tardis/apps/mydata/
 #RUN pip install -r tardis/apps/mydata/requirements.txt
@@ -57,7 +60,7 @@ COPY package.json .
 
 RUN npm set progress=false && \
     npm config set depth 0 && \
-    npm install
+    npm install --production
 
 COPY . .
 COPY settings.py ./tardis/
@@ -68,12 +71,37 @@ CMD ["gunicorn", "--bind", ":8000", "--config", "gunicorn_settings.py", "wsgi:ap
 
 FROM builder AS test
 
+# Remove production settings
 RUN rm -f ./tardis/settings.py
 
-#COPY --from=base . .
-RUN pip install -r requirements-mysql.txt
-RUN pip install -r requirements-test.txt
+# Install Chrome WebDriver
+RUN CHROMEDRIVER_VERSION=`curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE` && \
+    mkdir -p /opt/chromedriver-$CHROMEDRIVER_VERSION && \
+    curl -sS -o /tmp/chromedriver_linux64.zip https://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip && \
+    unzip -qq /tmp/chromedriver_linux64.zip -d /opt/chromedriver-$CHROMEDRIVER_VERSION && \
+    rm /tmp/chromedriver_linux64.zip && \
+    chmod +x /opt/chromedriver-$CHROMEDRIVER_VERSION/chromedriver && \
+    ln -fs /opt/chromedriver-$CHROMEDRIVER_VERSION/chromedriver /usr/local/bin/chromedriver
 
+# Install Google Chrome
+RUN curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
+    echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list && \
+    apt-get -yqq update && \
+    apt-get -yqq install google-chrome-stable && \
+    apt-get clean
+
+# Install MySQL packages
+COPY requirements-mysql.txt ./
+RUN pip install -q -r requirements-mysql.txt
+
+# Install test packages
+COPY requirements-test.txt ./
+RUN pip install -q -r requirements-test.txt
+
+# Install NodeJS packages
+RUN npm install
+
+# Create default storage
 RUN mkdir -p var/store
 
 CMD ["cat"]
