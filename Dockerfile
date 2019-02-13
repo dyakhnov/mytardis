@@ -29,7 +29,8 @@ RUN apt-get update -yqq && \
 RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - && \
     apt-get update -yqq && \
     apt-get install -yqq --no-install-recommends \
-		nodejs && \
+        nodejs \
+		nodejs-npm && \
 	rm -rf /var/lib/apt/lists/*
 
 # Remove OS junk
