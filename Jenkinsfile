@@ -86,7 +86,7 @@ podTemplate(
         }
         stage('Build production image') {
             container('docker') {
-                sh("docker build . --tag ${dockerImageFullNameTag} --target=base")
+                sh("docker build . --tag ${dockerImageFullNameTag} --target=builder")
             }
         }
         stage('Push production image') {
