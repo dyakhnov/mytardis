@@ -70,7 +70,7 @@ podTemplate(
             container('docker') {
                 parallel (
                     'npm': {
-                        sh("npm test")
+                        sh("docker run ${dockerImageFullNameTag} npm test")
                     },
                     'behave': {
                         sh("docker run ${dockerImageFullNameTag} python manage.py behave --settings=tardis.test_settings")

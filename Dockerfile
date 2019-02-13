@@ -29,14 +29,8 @@ RUN apt-get update -yqq && \
 RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - && \
     apt-get update -yqq && \
     apt-get install -yqq --no-install-recommends \
-        nodejs \
-		nodejs-npm && \
+        nodejs && \
 	rm -rf /var/lib/apt/lists/*
-
-# Remove OS junk
-RUN apt-get purge -yqq \
-        python3 && \
-    apt-get autoremove -y
 
 # Upgrade PIP
 RUN pip install --upgrade --no-cache-dir pip
@@ -68,6 +62,13 @@ RUN npm set progress=false && \
     npm config set depth 0 && \
     npm install --production
 
+# Remove build junk
+RUN apt-get purge -yqq \
+        build-essential \
+        python3 \
+        git && \
+    apt-get autoremove -y
+
 COPY . .
 COPY settings.py ./tardis/
 
@@ -96,9 +97,13 @@ RUN curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-ke
     apt-get -yqq install google-chrome-stable && \
     apt-get clean
 
+# Install PhantomJS
+RUN PHANTOMJS_CDNURL=https://npm.taobao.org/mirrors/phantomjs/ npm install phantomjs-prebuilt
+
 # Install packages for testing
 RUN apt-get update -yqq && \
     apt-get install -yqq --no-install-recommends \
+        build-essential \
         libmysqlclient-dev \
         libmysqlclient20 && \
     apt-get clean
