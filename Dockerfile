@@ -50,8 +50,8 @@ RUN pip install -r requirements-postgres.txt
 COPY tardis/apps/social_auth/requirements*.txt ./tardis/apps/social_auth/
 RUN pip install -r tardis/apps/social_auth/requirements.txt
 
-RUN git clone https://github.com/wettenhj/mytardis-app-mydata.git ./tardis/apps/mydata/
-RUN pip install -r tardis/apps/mydata/requirements.txt
+#RUN git clone https://github.com/wettenhj/mytardis-app-mydata.git ./tardis/apps/mydata/
+#RUN pip install -r tardis/apps/mydata/requirements.txt
 
 COPY package.json .
 
