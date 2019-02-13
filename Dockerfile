@@ -20,6 +20,8 @@ RUN apt-get update && apt-get install -qy --no-install-recommends \
         python-pip \
         python-setuptools \
         zlib1g-dev \
+        mc \
+        ncdu \
 	&& apt-get clean
 
 RUN curl -sL https://deb.nodesource.com/setup_10.x | bash -
@@ -48,8 +50,8 @@ RUN pip install -r requirements-postgres.txt
 COPY tardis/apps/social_auth/requirements*.txt ./tardis/apps/social_auth/
 RUN pip install -r tardis/apps/social_auth/requirements.txt
 
-#RUN git clone https://github.com/wettenhj/mytardis-app-mydata.git ./tardis/apps/mydata/
-#RUN pip install -r tardis/apps/mydata/requirements.txt
+RUN git clone https://github.com/wettenhj/mytardis-app-mydata.git ./tardis/apps/mydata/
+RUN pip install -r tardis/apps/mydata/requirements.txt
 
 COPY package.json .
 
@@ -65,6 +67,8 @@ EXPOSE 8000
 CMD ["gunicorn", "--bind", ":8000", "--config", "gunicorn_settings.py", "wsgi:application"]
 
 FROM builder AS test
+
+RUN rm -f ./tardis/settings.py
 
 #COPY --from=base . .
 RUN pip install -r requirements-mysql.txt

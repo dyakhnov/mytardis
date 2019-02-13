@@ -1,34 +1,62 @@
-*~
-*.pyc
-*.calltree
-*.conf
-*.egg-info/
-*.log
-*.prof
-*.pyc
-*.sqlite
-*.wsgi
-.idea/
-.installed.cfg
-.noseids
-.project
-.pydevproject
-.settings/
-/static/
-bin/
-celerybeat-schedule
+# Docker
+.dockerignore
+Dockerfile*
+docker*yml
+
+# Git
+.gitignore
+.git
+.github
+
+# PyCharm
+.idea
+
+# Python
+__pycache__
+**/*.py[cod]
+
+# Virtual env
+.env/
+.venv/
+venv/
+virtualenv/
+
+# Packaging
+.Python
+eggs/
 develop-eggs/
+*.egg-info/
+var/
+parts/
+build/
+dist/
+bin/
+.installed.cfg
+versions.cfg
+
+# Sphinx
 docs/Makefile
 docs/doctrees/
 docs/html/
 docs/make.bat
 docs/pydoc
-eggs/
-parts/
+
+# Misc
+*.conf
+*.log
+*.prof
+*.sqlite
+*~
+*.calltree
+*.wsgi
+.noseids
+.project
+.pydevproject
+.settings/
+
+# MyTardis
+/static/
+tardis_db
 tardis/settings.py
 tardis/tardis_portal/tests/rifcs/MyTARDIS-1.xml
-var/
-versions.cfg
-tardis_db
-Dockerfile*
-docker*yml
+celerybeat-schedule
