@@ -1,7 +1,8 @@
 FROM ubuntu:18.04 AS base
 
+# Upgrade OS and install packages
 RUN apt-get update -yqq && \
-    apt-get install -yqq \
+    apt-get install -yqq --no-install-recommends \
         build-essential \
         curl \
         git \
@@ -11,8 +12,6 @@ RUN apt-get update -yqq && \
         libldap2-dev \
         libmagic-dev \
         libmagickwand-dev \
-        libmysqlclient-dev \
-        libmysqlclient20 \
         libsasl2-dev \
         libssl-dev \
         libxml2-dev \
@@ -24,15 +23,21 @@ RUN apt-get update -yqq && \
         unzip \
         mc \
         ncdu && \
-	apt-get clean
+	rm -rf /var/lib/apt/lists/*
 
-RUN curl -sL https://deb.nodesource.com/setup_10.x | bash -
-
-RUN apt-get update -yqq && \
-    apt-get install -yqq \
+# Install NodeJS
+RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - && \
+    apt-get update -yqq && \
+    apt-get install -yqq --no-install-recommends \
 		nodejs && \
-	apt-get clean
+	rm -rf /var/lib/apt/lists/*
 
+# Remove OS junk
+RUN apt-get purge -yqq \
+        python3 && \
+    apt-get autoremove -y
+
+# Upgrade PIP
 RUN pip install --upgrade --no-cache-dir pip
 
 FROM base AS builder
@@ -88,6 +93,13 @@ RUN curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-ke
     echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list && \
     apt-get -yqq update && \
     apt-get -yqq install google-chrome-stable && \
+    apt-get clean
+
+# Install packages for testing
+RUN apt-get update -yqq && \
+    apt-get install -yqq --no-install-recommends \
+        libmysqlclient-dev \
+        libmysqlclient20 && \
     apt-get clean
 
 # Install MySQL packages
