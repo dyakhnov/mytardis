@@ -34,17 +34,18 @@ def init_filters():
 
 
 @tardis_app.task(name="tardis_portal.verify_dfos", ignore_result=True)
-def verify_dfos(dfos=None, **kwargs):
+def verify_dfos(**kwargs):
     from .models import DataFileObject
-    dfos_to_verify = dfos or DataFileObject.objects\
-                                           .filter(verified=False)
+    dfos_to_verify = DataFileObject.objects.filter(verified=False)
     kwargs['transaction_lock'] = kwargs.get('transaction_lock', True)
     for dfo in dfos_to_verify:
+        kwargs['priority'] = dfo.priority
+        kwargs['shadow'] = 'dfo_verify location:%s' % dfo.storage_box.name
         dfo_verify.apply_async(args=[dfo.id], **kwargs)
 
 
 @tardis_app.task(name='tardis_portal.ingest_received_files', ignore_result=True)
-def ingest_received_files():
+def ingest_received_files(**kwargs):
     '''
     finds all files stored in temporary storage boxes and attempts to move
     them to their permanent home
@@ -54,11 +55,13 @@ def ingest_received_files():
                                              Q(attributes__value='receiving'),
                                              ~Q(master_box=None))
     for box in ingest_boxes:
-        sbox_move_to_master.delay(box.id)
+        kwargs['shadow'] = 'sbox_move_to_master location:%s' % box.name
+        kwargs['priority'] = box.priority
+        sbox_move_to_master.apply_async(args=[box.id], **kwargs)
 
 
 @tardis_app.task(name="tardis_portal.autocache", ignore_result=True)
-def autocache():
+def autocache(**kwargs):
     init_filters()
     from .models import StorageBox
     autocache_boxes = StorageBox.objects.filter(
@@ -66,11 +69,14 @@ def autocache():
         Q(attributes__value__iexact='True'))
 
     for box in autocache_boxes:
-        sbox_cache_files.delay(box.id)
+        kwargs['shadow'] = 'sbox_cache_files location:%s' % box.name
+        kwargs['priority'] = box.priority
+        sbox_cache_files.apply_async(args=[box.id], **kwargs)
 
 
 @tardis_app.task(name="tardis_portal.email_user_task", ignore_result=True)
-def email_user_task(subject, template_name, context, user):
+def email_user_task(subject, template_name, context, user_id):
+    user = User.objects.get(id=user_id)
     email_user(subject, template_name, context, user)
 
 
@@ -117,10 +123,23 @@ def sbox_move_files(sbox_id, dest_box_id=None):
 
 @tardis_app.task(name="tardis_portal.storage_box.cache_files", ignore_result=True)
 def sbox_cache_files(sbox_id):
+    """
+    Copy all files to faster storage.
+
+    This can be used to copy data from a Vault cache (containing data
+    which will soon be pushed to tape) to Object Storage, so that the
+    data can always be accessed quickly from Object Storage, and the
+    Vault can be used for disaster recovery if necessary.
+    """
     init_filters()
+    from .models import DataFileObject
     from .models import StorageBox
     sbox = StorageBox.objects.get(id=sbox_id)
-    return sbox.cache_files()
+    shadow = 'dfo_cache_file location:%s' % sbox.name
+    for dfo in DataFileObject.objects.filter(storage_box=sbox, verified=True):
+        if DataFileObject.objects.filter(datafile=dfo.datafile).count() == 1:
+            dfo_cache_file.apply_async(
+                args=[dfo.id], priority=sbox.priority, shadow=shadow)
 
 
 @tardis_app.task(name='tardis_portal.storage_box.copy_to_master', ignore_result=True)
@@ -192,3 +211,10 @@ def dfo_verify(dfo_id, *args, **kwargs):
             return dfo.verify(*args, **kwargs)
     dfo = DataFileObject.objects.get(id=dfo_id)
     return dfo.verify(*args, **kwargs)
+
+
+@tardis_app.task(name='tardis_portal.clear_sessions', ignore_result=True)
+def clear_sessions():
+    """Clean up expired sessions using Django management command."""
+    from django.core import management
+    management.call_command("clearsessions", verbosity=0)

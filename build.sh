@@ -21,8 +21,12 @@ exit
 #   brew uninstall jpeg libtiff
 #   brew install imagemagick@6
 #   brew link --force imagemagick@6
+#   echo "export MAGICK_HOME=/usr/local/opt/imagemagick@6/" >> ~/.bashrc
+#   source ~/.bashrc
 #
 # brew install libmagic freetype
+# brew install rabbitmq
+# brew services start rabbitmq
 #
 # brew install postgresql # or SQLite may be sufficient for local development
 #   or for a local development server, install http://postgresapp.com/
@@ -51,7 +55,7 @@ mkdir -p var/store
 
 # execute this wonderful command to have your settings.py created/updated
 # with a generated Django SECRET_KEY (required for MyTardis to run)
-python -c "import os; from random import choice; key_line = '%sSECRET_KEY=\"%s\"  # generated from build.sh\n' % ('from .default_settings import * \n\n' if not os.path.isfile('tardis/settings.py') else '', ''.join([choice('abcdefghijklmnopqrstuvwxyz0123456789@#%^&*(-_=+)') for i in range(50)])); f=open('tardis/settings.py', 'a+'); f.write(key_line); f.close()"
+python -c "import os; from random import choice; key_line = '%sSECRET_KEY=\"%s\"  # generated from build.sh\n' % ('from .default_settings import *  # pylint: disable=W0401,W0614\n\n' if not os.path.isfile('tardis/settings.py') else '', ''.join([choice('abcdefghijklmnopqrstuvwxyz0123456789@#%^&*(-_=+)') for i in range(50)])); f=open('tardis/settings.py', 'a+'); f.write(key_line); f.close()"
 
 python test.py
 # for empty databases, sync all and fake migrate, otherwise run a real migration

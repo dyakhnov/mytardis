@@ -8,6 +8,7 @@ from tempfile import NamedTemporaryFile
 from os import path
 import mimetypes
 
+import six
 from six.moves import urllib
 from six import string_types
 
@@ -221,8 +222,7 @@ class DataFile(models.Model):
         if schemaType == Schema.DATAFILE or schemaType is None:
             return self.datafileparameterset_set.filter(
                 schema__type=Schema.DATAFILE)
-        else:
-            raise Schema.UnsupportedType
+        raise Schema.UnsupportedType
 
     def __str__(self):
         if self.sha512sum is not None and len(self.sha512sum) > 31:
@@ -235,13 +235,12 @@ class DataFile(models.Model):
     def get_mimetype(self):
         if self.mimetype:
             return self.mimetype
-        else:
-            suffix = path.splitext(self.filename)[-1]
-            try:
-                import mimetypes
-                return mimetypes.types_map[suffix.lower()]
-            except KeyError:
-                return 'application/octet-stream'
+        suffix = path.splitext(self.filename)[-1]
+        try:
+            import mimetypes
+            return mimetypes.types_map[suffix.lower()]
+        except KeyError:
+            return 'application/octet-stream'
 
     def get_view_url(self):
         render_image_size_limit = getattr(settings, 'RENDER_IMAGE_SIZE_LIMIT',
@@ -285,7 +284,9 @@ class DataFile(models.Model):
         if dfo is None:
             return None
         if dfo.storage_type in (StorageBox.TAPE,):
-            tasks.dfo_cache_file.apply_async(args=[dfo.id])
+            shadow = 'dfo_cache_file location:%s' % dfo.storage_box.name
+            tasks.dfo_cache_file.apply_async(
+                args=[dfo.id], priority=dfo.priority, shadow=shadow)
         return dfo.file_object
 
     def get_preferred_dfo(self, verified_only=True):
@@ -517,7 +518,7 @@ class DataFileObject(models.Model):
     def _changed(self):
         """return True if anything has changed since last save"""
         new_values = self._current_values
-        for k, v in new_values.iteritems():
+        for k, v in six.iteritems(new_values):
             if k not in self._initial_values:
                 return True
             if self._initial_values[k] != v:
@@ -531,7 +532,12 @@ class DataFileObject(models.Model):
             self._initial_values = self._current_values
         elif not reverify:
             return
-        tasks.dfo_verify.apply_async(countdown=5, args=[self.id])
+        shadow = 'dfo_verify location:%s' % self.storage_box.name
+        tasks.dfo_verify.apply_async(
+            args=[self.id],
+            countdown=5,
+            priority=self.priority,
+            shadow=shadow)
 
     @property
     def storage_type(self):
@@ -594,7 +600,8 @@ class DataFileObject(models.Model):
         cached_file_object = getattr(self, '_cached_file_object', None)
         if cached_file_object is None or cached_file_object.closed:
             cached_file_object = self._storage.open(self.uri or
-                                                    self._create_uri())
+                                                    self._create_uri(),
+                                                    mode='rb')
             self._cached_file_object = cached_file_object
         return self._cached_file_object
 
@@ -607,7 +614,7 @@ class DataFileObject(models.Model):
         """
         if file_object.closed:
             file_object = File(file_object)
-            file_object.open()
+            file_object.open(mode='rb')
         file_object.seek(0)
         self.uri = self._storage.save(self.uri or self.create_set_uri(),
                                       file_object)  # TODO: define behaviour
@@ -650,7 +657,11 @@ class DataFileObject(models.Model):
         existing = self.datafile.file_objects.filter(storage_box=dest_box)
         if existing.count() > 0:
             if not existing[0].verified and verify:
-                tasks.dfo_verify.delay(existing[0].id)
+                shadow = 'dfo_verify location:%s' % existing[0].storage_box.name
+                tasks.dfo_verify.apply_async(
+                    args=[existing[0].id],
+                    priority=existing[0].priority,
+                    shadow=shadow)
             return existing[0]
         try:
             with transaction.atomic():
@@ -665,7 +676,11 @@ class DataFileObject(models.Model):
                 (self.id, str(e)))
             return False
         if verify:
-            tasks.dfo_verify.delay(copy.id)
+            shadow = 'dfo_verify location:%s' % copy.storage_box.name
+            tasks.dfo_verify.apply_async(
+                args=[copy.id],
+                priority=copy.priority,
+                shadow=shadow)
         return copy
 
     def move_file(self, dest_box=None):
@@ -684,7 +699,13 @@ class DataFileObject(models.Model):
         return copy
 
     def verify(self, add_checksums=True, add_size=True):  # too complex # noqa
-        comparisons = ['size', 'md5sum', 'sha512sum']
+        compute_md5 = getattr(settings, 'COMPUTE_MD5', True)
+        compute_sha512 = getattr(settings, 'COMPUTE_SHA512', True)
+        comparisons = ['size']
+        if compute_md5:
+            comparisons.append('md5sum')
+        if compute_sha512:
+            comparisons.append('sha512sum')
 
         df = self.datafile
         database = {comp_type: getattr(df, comp_type)
@@ -708,8 +729,6 @@ class DataFileObject(models.Model):
                 if add_size:
                     database_update['size'] = actual['size']
             if same_values.get('size', True):
-                compute_md5 = getattr(settings, 'COMPUTE_MD5', True)
-                compute_sha512 = getattr(settings, 'COMPUTE_SHA512', True)
                 actual.update(compute_checksums(
                     self.file_object,
                     compute_md5=compute_md5,
@@ -769,6 +788,13 @@ class DataFileObject(models.Model):
     def modified_time(self):
         return self._storage.get_modified_time(self.uri)
 
+    @property
+    def priority(self):
+        '''
+        Default priority for tasks which take this DFO as an argument
+        '''
+        return self.storage_box.priority
+
 
 @receiver(pre_delete, sender=DataFileObject, dispatch_uid='dfo_delete')
 def delete_dfo(sender, instance, **kwargs):
@@ -821,7 +847,7 @@ def compute_checksums(file_object,
     update_fns = {'md5sum': lambda x, y: x.update(y),
                   'sha512sum': lambda x, y: x.update(y)}
     file_object.seek(0)
-    for chunk in iter(lambda: file_object.read(32 * blocksize), ''):
+    for chunk in iter(lambda: file_object.read(32 * blocksize), b''):
         for key, val in results.items():
             update_fns[key](val, chunk)
     if close_file:

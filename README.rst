@@ -10,6 +10,10 @@ MyTardis
    :target: https://semaphoreapp.com/mytardis/mytardis
    :alt: Semaphore build status
 
+.. image:: https://travis-ci.org/mytardis/mytardis.svg?branch=develop
+    :target: https://travis-ci.org/mytardis/mytardis
+    :alt: Travis CI build status
+   
 .. image:: https://api.codacy.com/project/badge/Grade/c27bad18abaf443c93e58192757c2025
    :alt: Codacy Badge
    :target: https://app.codacy.com/app/mytardis/mytardis?utm_source=github.com&utm_medium=referral&utm_content=mytardis/mytardis&utm_campaign=badger
@@ -107,12 +111,12 @@ included. It will move to newer versions automatically. Follow this branch
 if you want to stay up to date in a production environment.
 
 Each version has its own branch named by version number. At the time of
-writing, the latest release is ``3.8.1``, tagged from the ``series-3.8``
+writing, the latest release is ``4.0.0``, tagged from the ``series-4.0``
 branch. Follow this branch for your production installation and
 perform version upgrades manually.
 
 Each bugfix or set of fixes bumps the minor version and each new release is
-tagged, eg. ``3.8.2``. Use tagged releases if you are paranoid about changes to
+tagged, eg. ``4.0.1``. Use tagged releases if you are paranoid about changes to
 the code you have not tested yourself.
 
 To follow development, please see the contributing section below.

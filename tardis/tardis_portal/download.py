@@ -37,6 +37,7 @@ from django.contrib.auth.decorators import login_required
 from tardis.analytics.tracker import IteratorTracker
 from .models import Dataset
 from .models import DataFile
+from .models import DataFileObject
 from .models import Experiment
 from .auth.decorators import has_datafile_download_access
 from .auth.decorators import experiment_download_required
@@ -283,7 +284,7 @@ class UncachedTarStream(TarFile):
         else:
             result_buf = uc_buf
         if remainder is not None:
-            result_buf = ''.join([remainder, result_buf])
+            result_buf = b''.join([remainder, result_buf])
         stream_buffers = []
         while len(result_buf) >= self.http_buffersize:
             stream_buffers.append(result_buf[:self.http_buffersize])
@@ -426,8 +427,10 @@ def streaming_download_experiment(request, experiment_id, comptype='tgz',
     rootdir = get_filesystem_safe_experiment_name(experiment)
     filename = '%s-complete.tar' % rootdir
 
-    datafiles = DataFile.objects.filter(
-        dataset__experiments__id=experiment_id)
+    df_ids = DataFileObject.objects.filter(
+        datafile__dataset__experiments__id=experiment_id, verified=True) \
+                .values('datafile_id').distinct()
+    datafiles = DataFile.objects.filter(id__in=df_ids)
     return _streaming_downloader(request, datafiles, rootdir, filename,
                                  comptype, organization)
 
@@ -439,7 +442,10 @@ def streaming_download_dataset(request, dataset_id, comptype='tgz',
     rootdir = get_filesystem_safe_dataset_name(dataset)
     filename = '%s-complete.tar' % rootdir
 
-    datafiles = DataFile.objects.filter(dataset=dataset)
+    df_ids = DataFileObject.objects.filter(
+        datafile__dataset=dataset, verified=True) \
+        .values('datafile_id').distinct()
+    datafiles = DataFile.objects.filter(id__in=df_ids)
     return _streaming_downloader(request, datafiles, rootdir, filename,
                                  comptype, organization)
 
