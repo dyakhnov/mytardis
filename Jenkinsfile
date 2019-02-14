@@ -61,48 +61,58 @@ podTemplate(
         }
         dockerImageTag = sh(returnStdout: true, script: 'git log -n 1 --pretty=format:"%h"').trim()
         dockerImageFullNameTag = "${dockerHubAccount}/${dockerImageName}:${dockerImageTag}"
-        stage('Build test image') {
+        stage('Build image for tests') {
             container('docker') {
                 sh("docker build . --tag ${dockerImageFullNameTag} --target=test")
             }
         }
         stage('Test image') {
-            container('docker') {
-                parallel (
-                    'npm': {
+            parallel {
+                stage('npm') {
+                    container('docker') {
                         sh("docker run ${dockerImageFullNameTag} npm test")
-                    },
-                    'behave': {
+                    }
+                }
+                stage('behave') {
+                    container('docker') {
                         sh("docker run ${dockerImageFullNameTag} python manage.py behave --settings=tardis.test_settings")
-                    },
-                    'pylint': {
+                    }
+                }
+                stage('pylint') {
+                    container('docker') {
                         sh("docker run ${dockerImageFullNameTag} pylint --rcfile .pylintrc tardis")
-                    },
-                    'memory': {
+                    }
+                }
+                stage('memory') {
+                    container('docker') {
                         sh("docker run ${dockerImageFullNameTag} python test.py test --settings=tardis.test_settings")
-                    },
-                    'postgres': {
+                    }
+                }
+                stage('postgres') {
+                    container('docker') {
                         sh("docker run --add-host postgres:${ip} ${dockerImageFullNameTag} python test.py test --settings=tardis.test_on_postgresql_settings")
-                    },
-                    'mysql': {
+                    }
+                }
+                stage('mysql') {
+                    container('docker') {
                         sh("docker run --add-host mysql:${ip} ${dockerImageFullNameTag} python test.py test --settings=tardis.test_on_mysql_settings")
                     }
-                )
+                }
             }
         }
-        stage('Build production image') {
+        stage('Build image for production') {
             container('docker') {
                 sh("docker build . --tag ${dockerImageFullNameTag} --target=builder")
             }
         }
-        stage('Push production image') {
+        stage('Push image to DockerHub') {
             container('docker') {
                 sh("docker push ${dockerImageFullNameTag}")
                 sh("docker tag ${dockerImageFullNameTag} ${dockerImageFullNameLatest}")
                 sh("docker push ${dockerImageFullNameLatest}")
             }
         }
-        stage('Deploy production image') {
+        stage('Deploy image to Kubernetes') {
             container('kubectl') {
                 ['mytardis', 'celery-worker', 'celery-filter', 'celery-beat'].each { item ->
                     sh ("kubectl -n ${k8sDeploymentNamespace} set image deployment/${item} ${item}=${dockerImageFullNameTag}")
