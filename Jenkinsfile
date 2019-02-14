@@ -66,40 +66,22 @@ podTemplate(
                 sh("docker build . --tag ${dockerImageFullNameTag} --target=test")
             }
         }
-        stage('Test image') {
-            parallel {
-                stage('npm') {
-                    container('docker') {
-                        sh("docker run ${dockerImageFullNameTag} npm test")
-                    }
-                }
-                stage('behave') {
-                    container('docker') {
-                        sh("docker run ${dockerImageFullNameTag} python manage.py behave --settings=tardis.test_settings")
-                    }
-                }
-                stage('pylint') {
-                    container('docker') {
-                        sh("docker run ${dockerImageFullNameTag} pylint --rcfile .pylintrc tardis")
-                    }
-                }
-                stage('memory') {
-                    container('docker') {
-                        sh("docker run ${dockerImageFullNameTag} python test.py test --settings=tardis.test_settings")
-                    }
-                }
-                stage('postgres') {
-                    container('docker') {
-                        sh("docker run --add-host postgres:${ip} ${dockerImageFullNameTag} python test.py test --settings=tardis.test_on_postgresql_settings")
-                    }
-                }
-                stage('mysql') {
-                    container('docker') {
-                        sh("docker run --add-host mysql:${ip} ${dockerImageFullNameTag} python test.py test --settings=tardis.test_on_mysql_settings")
-                    }
+        def tests = [:]
+        [
+            ['npm', "docker run ${dockerImageFullNameTag} npm test"],
+            ['behave', "docker run ${dockerImageFullNameTag} python manage.py behave --settings=tardis.test_settings"],
+            ['pylint', "docker run ${dockerImageFullNameTag} pylint --rcfile .pylintrc tardis"],
+            ['memory', "docker run ${dockerImageFullNameTag} python test.py test --settings=tardis.test_settings"],
+            ['postgres', "docker run --add-host postgres:${ip} ${dockerImageFullNameTag} python test.py test --settings=tardis.test_on_postgresql_settings"],
+            ['mysql', "docker run --add-host mysql:${ip} ${dockerImageFullNameTag} python test.py test --settings=tardis.test_on_mysql_settings"]
+        ].each { item ->
+            stage("Running test - $item[0]") {
+                container('docker') {
+                    sh($item[1])
                 }
             }
         }
+        parallel tests
         stage('Build image for production') {
             container('docker') {
                 sh("docker build . --tag ${dockerImageFullNameTag} --target=builder")
