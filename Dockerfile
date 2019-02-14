@@ -12,6 +12,8 @@ RUN apt-get update -yqq && \
         libldap2-dev \
         libmagic-dev \
         libmagickwand-dev \
+        libmysqlclient-dev \
+        libmysqlclient20 \
         libsasl2-dev \
         libssl-dev \
         libxml2-dev \
@@ -98,13 +100,6 @@ RUN curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-ke
 
 # Install PhantomJS
 RUN PHANTOMJS_CDNURL=https://npm.taobao.org/mirrors/phantomjs/ npm install phantomjs-prebuilt
-
-# Install packages for testing
-RUN apt-get update -yqq && \
-    apt-get install -yqq --no-install-recommends \
-        libmysqlclient-dev \
-        libmysqlclient20 && \
-    apt-get clean
 
 # Install MySQL packages
 COPY requirements-mysql.txt ./
