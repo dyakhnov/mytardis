@@ -64,7 +64,6 @@ RUN npm set progress=false && \
 
 # Remove build junk
 RUN apt-get purge -yqq \
-        build-essential \
         python3 \
         git && \
     apt-get autoremove -y
@@ -103,7 +102,6 @@ RUN PHANTOMJS_CDNURL=https://npm.taobao.org/mirrors/phantomjs/ npm install phant
 # Install packages for testing
 RUN apt-get update -yqq && \
     apt-get install -yqq --no-install-recommends \
-        build-essential \
         libmysqlclient-dev \
         libmysqlclient20 && \
     apt-get clean
