@@ -64,12 +64,6 @@ RUN npm set progress=false && \
     npm config set depth 0 && \
     npm install --production
 
-# Remove build junk
-RUN apt-get purge -yqq \
-        python3 \
-        git && \
-    apt-get autoremove -y
-
 COPY . .
 COPY settings.py ./tardis/
 
