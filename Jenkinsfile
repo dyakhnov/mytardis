@@ -19,10 +19,10 @@ podTemplate(
             envVars: [
                 containerEnvVar(key: 'DOCKER_CONFIG', value: '/tmp/docker')
             ],
-            resourceRequestCpu: '500m',
-            resourceLimitCpu: '1000m',
-            resourceRequestMemory: '1Gi',
-            resourceLimitMemory: '2Gi'
+            resourceRequestCpu: '2000m',
+            resourceLimitCpu: '4000m',
+            resourceRequestMemory: '2Gi',
+            resourceLimitMemory: '4Gi'
         ),
         containerTemplate(
             name: 'mysql',
@@ -56,7 +56,7 @@ podTemplate(
             envVars: [
                 containerEnvVar(key: 'KUBECONFIG', value: '/tmp/kube/config')
             ],
-            resourceRequestCpu: '200m',
+            resourceRequestCpu: '250m',
             resourceLimitCpu: '500m'
         )
     ],
