@@ -19,8 +19,10 @@ podTemplate(
             envVars: [
                 containerEnvVar(key: 'DOCKER_CONFIG', value: '/tmp/docker')
             ],
-            resourceRequestCpu: '2',
-            resourceRequestMemory: '4Gi'
+            resourceRequestCpu: '500m',
+            resourceLimitCpu: '1000m',
+            resourceRequestMemory: '1Gi',
+            resourceLimitMemory: '2Gi'
         ),
         containerTemplate(
             name: 'mysql',
@@ -28,7 +30,11 @@ podTemplate(
             alwaysPullImage: false,
             envVars: [
                 envVar(key: 'MYSQL_ROOT_PASSWORD', value: 'mysql')
-            ]
+            ],
+            resourceRequestCpu: '500m',
+            resourceLimitCpu: '1000m',
+            resourceRequestMemory: '1Gi',
+            resourceLimitMemory: '2Gi'
         ),
         containerTemplate(
             name: 'postgres',
@@ -36,7 +42,11 @@ podTemplate(
             alwaysPullImage: false,
             envVars: [
                 envVar(key: 'POSTGRES_PASSWORD', value: 'postgres')
-            ]
+            ],
+            resourceRequestCpu: '500m',
+            resourceLimitCpu: '1000m',
+            resourceRequestMemory: '1Gi',
+            resourceLimitMemory: '2Gi'
         ),
         containerTemplate(
             name: 'kubectl',
@@ -46,6 +56,8 @@ podTemplate(
             envVars: [
                 containerEnvVar(key: 'KUBECONFIG', value: '/tmp/kube/config')
             ]
+            resourceRequestCpu: '200m',
+            resourceLimitCpu: '500m'
         )
     ],
     volumes: [
