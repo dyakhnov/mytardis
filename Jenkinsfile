@@ -55,7 +55,7 @@ podTemplate(
             command: 'cat',
             envVars: [
                 containerEnvVar(key: 'KUBECONFIG', value: '/tmp/kube/config')
-            ]
+            ],
             resourceRequestCpu: '200m',
             resourceLimitCpu: '500m'
         )
