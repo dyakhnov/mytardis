@@ -3,7 +3,10 @@ import urllib
 import yaml
 from .default_settings import *
 
-data = yaml.load(os.environ.get('SETTINGS'))
+settings_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                 'settings.yaml')
+with open(settings_filename) as settings_file:
+    data = yaml.load(settings_file, Loader=yaml.FullLoader)
 
 DEBUG = data['debug']
 SECRET_KEY = data['secret_key']
@@ -26,6 +29,8 @@ BROKER_URL = 'amqp://%(user)s:%(password)s@%(host)s:5672/%(vhost)s' % {
     'password': urllib.quote_plus(data['rabbitmq']['password'],),
     'vhost': data['rabbitmq']['vhost']
 }
+
+METADATA_STORE_PATH = data['metadata_store_path']
 
 LOGGING = {
     'version': 1,
