@@ -109,4 +109,5 @@ RUN npm install
 # Create default storage
 RUN mkdir -p var/store
 
-CMD ["cat"]
+# This will keep container running...
+CMD ["tail", "-f", "/dev/null"]
