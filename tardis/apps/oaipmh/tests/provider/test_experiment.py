@@ -3,10 +3,10 @@ from abc import ABCMeta, abstractmethod
 from django.contrib.sites.requests import RequestSite
 from django.test import TestCase
 
+import pytz
+
 import oaipmh.error
 import oaipmh.interfaces
-
-import pytz
 
 from tardis.tardis_portal.models import Experiment, License, User, \
      ExperimentParameterSet

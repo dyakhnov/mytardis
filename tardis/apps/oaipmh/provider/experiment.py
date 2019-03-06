@@ -5,11 +5,11 @@ from django.conf import settings
 from django.urls import reverse
 from lxml.etree import SubElement
 
+import pytz
+
 from oaipmh.common import Header, Metadata
 import oaipmh.error
 from oaipmh.server import oai_dc_writer, NS_XSI
-
-import pytz
 
 from tardis.tardis_portal.ParameterSetManager import ParameterSetManager
 from tardis.tardis_portal.models import Experiment, \

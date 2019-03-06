@@ -37,9 +37,10 @@ LDAP Authentication module.
 
 
 import logging
-import ldap
 
 from django.conf import settings
+
+import ldap
 
 from ..models import UserAuthentication
 from .interfaces import AuthProvider, GroupProvider, UserProvider

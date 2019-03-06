@@ -5,8 +5,6 @@ import logging
 
 from six.moves import urllib
 
-import jwt
-
 from django.conf import settings
 from django.contrib import auth as djauth
 from django.contrib.auth import logout as django_logout
@@ -21,6 +19,8 @@ from django.shortcuts import redirect
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
+
+import jwt
 
 from ..auth import auth_service
 from ..auth.localdb_auth import auth_key as localdb_auth_key

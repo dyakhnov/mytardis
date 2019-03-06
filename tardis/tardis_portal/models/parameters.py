@@ -13,9 +13,9 @@ from django.utils.safestring import mark_safe
 from django.utils.timezone import is_aware, is_naive, make_aware, make_naive
 from django.utils.encoding import python_2_unicode_compatible
 
-import dateutil.parser
 import pytz
 from six import text_type
+import dateutil.parser
 
 from ..ParameterSetManager import ParameterSetManager
 from ..managers import OracleSafeManager, ParameterNameManager, SchemaManager

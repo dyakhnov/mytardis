@@ -64,6 +64,8 @@ RUN npm set progress=false && \
     npm config set depth 0 && \
     npm install --production
 
+FROM builder AS production
+
 COPY . .
 COPY settings.py ./tardis/
 
@@ -72,9 +74,6 @@ EXPOSE 8000
 CMD ["gunicorn", "--bind", ":8000", "--config", "gunicorn_settings.py", "wsgi:application"]
 
 FROM builder AS test
-
-# Remove production settings
-RUN rm -f ./tardis/settings.py
 
 # Install Chrome WebDriver
 RUN CHROMEDRIVER_VERSION=`curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE` && \
@@ -85,10 +84,12 @@ RUN CHROMEDRIVER_VERSION=`curl -sS https://chromedriver.storage.googleapis.com/L
     chmod +x /opt/chromedriver-$CHROMEDRIVER_VERSION/chromedriver && \
     ln -fs /opt/chromedriver-$CHROMEDRIVER_VERSION/chromedriver /usr/local/bin/chromedriver
 
-# Install Google Chrome
+# Setup Google Chrome repo
 RUN curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-    echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list && \
-    apt-get -yqq update && \
+    echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list
+
+# Install Google Chrome
+RUN apt-get -yqq update && \
     apt-get -yqq install google-chrome-stable && \
     apt-get clean
 
@@ -108,6 +109,11 @@ RUN npm install
 
 # Create default storage
 RUN mkdir -p var/store
+
+COPY . .
+
+# Remove production settings
+# RUN rm -f ./tardis/settings.py
 
 # This will keep container running...
 CMD ["tail", "-f", "/dev/null"]
