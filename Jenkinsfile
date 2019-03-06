@@ -93,7 +93,7 @@ podTemplate(
         parallel tests
         stage('Build image for production') {
             container('docker') {
-                sh("docker build . --tag ${dockerImageFullNameTag} --target=builder")
+                sh("docker build . --tag ${dockerImageFullNameTag} --target=production")
             }
         }
         stage('Push image to DockerHub') {
