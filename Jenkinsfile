@@ -3,7 +3,7 @@ def dockerHubAccount = 'dyakhnov'
 def dockerImageName = 'mytardis'
 def dockerImageTag = ''
 def dockerImageFullNameTag = ''
-def dockerImageFullNameLatest = "${dockerHubAccount}/${dockerImageName}:latest"
+def dockerImageFullNameLatest = "${dockerHubAccount}/${dockerImageName}:nofilters"
 def k8sDeploymentNamespace = 'mytardis'
 
 podTemplate(
