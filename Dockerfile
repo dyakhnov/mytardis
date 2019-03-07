@@ -71,8 +71,6 @@ COPY settings.py ./tardis/
 
 EXPOSE 8000
 
-ENTRYPOINT ["docker-entrypoint.sh"]
-
 CMD ["gunicorn", "--bind", ":8000", "--config", "gunicorn_settings.py", "wsgi:application"]
 
 FROM builder AS test

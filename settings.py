@@ -31,6 +31,7 @@ if os.path.isfile(settings_filename):
 
     METADATA_STORE_PATH = data['metadata_store_path']
 
+STATIC_ROOT = '/srv/stormon-cinder-staging3/static_files'
 
 LOGGING = {
     'version': 1,
