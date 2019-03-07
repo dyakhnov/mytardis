@@ -69,6 +69,8 @@ FROM builder AS production
 COPY . .
 COPY settings.py ./tardis/
 
+RUN python manage.py collectstatic --noinput
+
 EXPOSE 8000
 
 CMD ["gunicorn", "--bind", ":8000", "--config", "gunicorn_settings.py", "wsgi:application"]
