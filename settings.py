@@ -21,6 +21,7 @@ if os.path.isfile(settings_filename):
         'NAME': data['postgres']['name']
     }
 
+    CELERY_RESULT_BACKEND = 'amqp'
     BROKER_URL = 'amqp://%(user)s:%(password)s@%(host)s:5672/%(vhost)s' % {
         'host': data['rabbitmq']['host'],
         'user': data['rabbitmq']['user'],
@@ -30,8 +31,6 @@ if os.path.isfile(settings_filename):
 
     METADATA_STORE_PATH = data['metadata_store_path']
 
-CELERY_RESULT_BACKEND = 'amqp'
-STATIC_ROOT = '/mnt/static_files'
 
 LOGGING = {
     'version': 1,
