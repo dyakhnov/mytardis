@@ -33,6 +33,12 @@ if os.path.isfile(settings_filename):
 
 STATIC_ROOT = '/srv/stormon-cinder-staging3/static_files'
 
+CELERY_QUEUES += (
+    Queue('filters', Exchange('filters'),
+          routing_key='filters',
+          queue_arguments={'x-max-priority': MAX_TASK_PRIORITY}),
+)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
