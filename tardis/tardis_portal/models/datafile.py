@@ -779,7 +779,12 @@ class DataFileObject(models.Model):
         from tardis.celery import tardis_app
         tardis_app.send_task(
             'mytardis.apply_filters',
-            args = [self.id],
+            args = [
+                self.id,
+                self.verified,
+                self.get_full_path(),
+                self.uri
+            ],
             queue = 'filters',
             priority = getattr(settings, 'DEFAULT_TASK_PRIORITY', 0))
         return result
