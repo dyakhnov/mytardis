@@ -195,3 +195,72 @@ def clear_sessions():
     """Clean up expired sessions using Django management command."""
     from django.core import management
     management.call_command("clearsessions", verbosity=0)
+
+
+@tardis_app.task(name='tardis_portal.save_metadata', ignore_result=True)
+def save_metadata(id, name, schema, metadata):
+    """Save all the metadata to a Dataset_Files paramamter set."""
+    from fractions import Fraction
+    from .models import ParameterName, Schema, DataFile,\
+                        DatafileParameterSet, DatafileParameter
+
+    def getSchema(schema, name):
+        """
+        Return the schema object that the paramaterset will use.
+        """
+        try:
+            return Schema.objects.get(namespace__exact=schema)
+        except Schema.DoesNotExist:
+            new_schema = Schema(namespace=schema, name=name,
+                                type=Schema.DATAFILE)
+            new_schema.save()
+            return new_schema
+
+    def getParameters(schema, metadata):
+        """
+        Return a list of the paramaters that will be saved.
+        """
+        param_objects = ParameterName.objects.filter(schema=schema)
+        parameters = []
+        for p in metadata:
+            parameter = filter(lambda x, y=p: x.name == y, param_objects)
+            if parameter:
+                parameters.append(parameter[0])
+        return parameters
+
+    data_schema = getSchema(schema, name)
+    parameters = getParameters(data_schema, metadata)
+    if not parameters:
+        print("Bailing out of save_metadata because of 'not parameters'.")
+    else:
+        # Load datafile
+        df = DataFile.objects.get(id=id)
+
+        # Check for existing data
+        try:
+            ps = DatafileParameterSet.objects.get(schema=data_schema,
+                                                  datafile=df)
+            print("Parameter set already exists for {}".format(df.filename))
+        except DatafileParameterSet.DoesNotExist:
+            ps = DatafileParameterSet(schema=data_schema, datafile=df)
+            ps.save()
+            # Save metadata
+            for p in parameters:
+                print(p.name)
+                if p.name in metadata:
+                    dfp = DatafileParameter(parameterset=ps, name=p)
+                    if p.isNumeric():
+                        if metadata[p.name] != '':
+                            dfp.numerical_value = metadata[p.name]
+                            dfp.save()
+                    elif isinstance(metadata[p.name], list):
+                        for val in reversed(metadata[p.name]):
+                            strip_val = val.strip()
+                            if strip_val:
+                                dfp = DatafileParameter(parameterset=ps,
+                                                        name=p)
+                                dfp.string_value = strip_val
+                                dfp.save()
+                    else:
+                        dfp.string_value = metadata[p.name]
+                        dfp.save()
