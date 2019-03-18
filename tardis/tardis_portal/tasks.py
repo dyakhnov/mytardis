@@ -11,13 +11,6 @@ from tardis.celery import tardis_app
 from .email import email_user
 
 
-try:
-    from .logging_middleware import LoggingMiddleware
-    get_response = lambda _: HttpResponse('')
-    LoggingMiddleware(get_response)
-except Exception:
-    pass
-
 logger = logging.getLogger(__name__)
 
 
