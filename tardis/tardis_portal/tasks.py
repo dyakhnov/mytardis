@@ -5,7 +5,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.db import transaction
 from django.db.models import Q
-from django.http import HttpResponse  # pylint: disable=wrong-import-order
 
 from tardis.celery import tardis_app
 from .email import email_user
